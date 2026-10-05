@@ -1,0 +1,25 @@
+name: Bug report
+description: Something in the tool itself is broken (crash, wrong output, install problem).
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and full output
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Output of `bafang-cal --version`, OS, Python version, USB-UART adapter.
+    validations:
+      required: true

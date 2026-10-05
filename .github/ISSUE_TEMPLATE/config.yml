@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Safety notice
+    url: https://github.com/jjuhala/Bafang-Motor-Calibration#safety
+    about: Please read the safety section before running the tool on a bike.

@@ -1,0 +1,56 @@
+name: Calibration report
+description: Tell us how a calibration run went (success or failure) -- this is how the tool gets validated.
+labels: ["field report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Real-world results are the only way to confirm how
+        different controllers behave. Please attach the `--trace` file if you can.
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: Outcome
+      options:
+        - Controller reported 44 and the motor runs normally afterwards
+        - Controller reported 44, but the motor still misbehaves
+        - Controller reported a failure code (51/53/63/73/84/85)
+        - Controller never reported a calibration status (40 ...)
+        - The controller did not respond
+        - Something else (describe below)
+    validations:
+      required: true
+  - type: input
+    id: motor
+    attributes:
+      label: Motor and controller
+      description: Model and label codes, e.g. "M620 / MM G510.1000, controller CR R10M.1000.SN.U 1.5"
+    validations:
+      required: true
+  - type: input
+    id: display
+    attributes:
+      label: Normal display
+      description: e.g. "DP C18.UART" (CAN displays are not supported)
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did the motor do during the run? Which status codes / speeds were shown?
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Console output
+      render: text
+  - type: textarea
+    id: trace
+    attributes:
+      label: Byte trace (--trace FILE)
+      render: text
+  - type: input
+    id: setup
+    attributes:
+      label: Adapter, OS and tool version
+      description: e.g. "CP2102 5 V, Windows 11, bafang-cal 0.1.0"
