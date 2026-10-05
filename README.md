@@ -220,6 +220,7 @@ not needed for the calibration.
 | Symptom | What to check |
 |---------|---------------|
 | `probe` gets no reply | controller not switched on (power-lock bridge), TX/RX swapped (swap them — harmless), wrong port, missing GND, CAN-version motor |
+| `probe` fails right after a calibration attempt | the controller is still on the 9600 baud service link — `probe` detects this and says so. Power-cycle (battery off and on) |
 | "never answered at 9600 baud" | the controller did not take the service-link request — CAN controller, or firmware without it. Power-cycle and retry with `--trace`, then open an issue |
 | "never reported a calibration status" | check the controller label — firmware other than CR R10M.1000.SN.U 1.5 may not support the procedure; power-cycle and try once more |
 | Failure code 51/53/63/73/84/85 | re-seat the motor connectors, power-cycle, run again; persistent failures mean a defective or unsupported controller |

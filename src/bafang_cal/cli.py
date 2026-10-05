@@ -29,6 +29,7 @@ from .service import (
     ProbeResult,
     ScheduleRunner,
     Telemetry,
+    answers_at,
     calibration_schedule,
     enter_service_mode,
     probe,
@@ -77,6 +78,13 @@ The controller did not answer on the 1200 baud display link. Check that:
   * the motor is a UART version -- CAN-bus motors (DP C18.CAN etc.) do not
     speak this protocol.
 Use --skip-check to send the calibration commands anyway.
+"""
+
+STILL_ON_SERVICE_LINK = """\
+The controller answers on the 9600 baud service link: it is still there from an
+earlier calibration attempt and ignores the normal 1200 baud link until it is
+restarted. Switch the battery OFF, wait about 10 seconds, switch it ON again and
+retry.
 """
 
 NEXT_STEPS = """\
@@ -246,6 +254,13 @@ def _open_transport(args: argparse.Namespace, clock: Clock) -> Iterator[Transpor
             trace_stream.close()
 
 
+def _silence_help(transport: Transport) -> str:
+    """Explain why the controller is silent at 1200 baud."""
+    if answers_at(transport, SERVICE_BAUDRATE):
+        return STILL_ON_SERVICE_LINK
+    return NO_RESPONSE_HELP
+
+
 def _preflight(transport: Transport, clock: Clock, args: argparse.Namespace, out: TextIO) -> bool:
     if args.skip_check:
         return True
@@ -253,7 +268,7 @@ def _preflight(transport: Transport, clock: Clock, args: argparse.Namespace, out
     result = probe(transport, clock)
     _print_probe(result, out)
     if not result.responded:
-        out.write("\n" + NO_RESPONSE_HELP)
+        out.write("\n" + _silence_help(transport))
         return False
     if result.status is not None and result.status.is_error:
         out.write(
@@ -306,9 +321,9 @@ def _cmd_probe(args: argparse.Namespace, out: TextIO) -> int:
                 clock.sleep(1.0)
         except KeyboardInterrupt:
             out.write("\n")
-    if not result.responded:
-        out.write("\n" + NO_RESPONSE_HELP)
-        return 1
+        if not result.responded:
+            out.write("\n" + _silence_help(transport))
+            return 1
     return 0
 
 

@@ -5,6 +5,7 @@ import time
 
 import pytest
 
+from bafang_cal import transport as transport_module
 from bafang_cal.simulator import ManualClock, SimulatedController
 from bafang_cal.transport import (
     SerialTransport,
@@ -98,3 +99,56 @@ def test_list_serial_ports_can_filter_usb(monkeypatch: pytest.MonkeyPatch) -> No
 
     assert list_serial_ports() == [("/dev/ttyS0", "ttyS0"), ("/dev/ttyUSB0", "CP2102")]
     assert list_serial_ports(usb_only=True) == [("/dev/ttyUSB0", "CP2102")]
+
+
+class FakePort:
+    """Stands in for a pyserial port to observe how the speed is changed."""
+
+    def __init__(self, failures: int = 0) -> None:
+        self.baudrate = 1200
+        self.failures = failures
+        self.calls: list[str] = []
+
+    def close(self) -> None:
+        self.calls.append("close")
+
+    def open(self) -> None:
+        import serial
+
+        self.calls.append(f"open@{self.baudrate}")
+        if self.failures:
+            self.failures -= 1
+            raise serial.SerialException("port busy")
+
+    def reset_input_buffer(self) -> None:
+        self.calls.append("reset")
+
+
+def _with_fake_port(fake: FakePort) -> SerialTransport:
+    port = SerialTransport("loop://", 1200)
+    port._serial.close()
+    port._serial = fake  # type: ignore[assignment]
+    return port
+
+
+def test_speed_change_reopens_the_port(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Some drivers (CH340 on macOS) ignore a speed change on an open port.
+    monkeypatch.setattr(transport_module, "_REOPEN_RETRY_DELAY", 0.0)
+    fake = FakePort()
+    port = _with_fake_port(fake)
+    port.set_baudrate(9600)
+    assert fake.calls == ["close", "open@9600", "reset"]
+    assert port.baudrate == 9600
+
+
+def test_speed_change_retries_a_busy_port(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(transport_module, "_REOPEN_RETRY_DELAY", 0.0)
+    fake = FakePort(failures=2)
+    _with_fake_port(fake).set_baudrate(9600)
+    assert fake.calls == ["close", "open@9600", "open@9600", "open@9600", "reset"]
+
+
+def test_speed_change_gives_up_eventually(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(transport_module, "_REOPEN_RETRY_DELAY", 0.0)
+    with pytest.raises(TransportError, match="cannot reopen the serial port at 9600 baud"):
+        _with_fake_port(FakePort(failures=99)).set_baudrate(9600)

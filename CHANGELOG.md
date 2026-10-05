@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Changing the line speed now closes and reopens the serial port. Some
+  USB-serial drivers accept a speed change on an open port but keep the old
+  speed: with a CH340 adapter on macOS every service-link frame still went out
+  at 1200 baud, so the controller (already on 9600) never answered or
+  calibrated.
+
+### Added
+
+- `probe` and the `calibrate` pre-check recognise a controller that is still on
+  the 9600 baud service link from an earlier attempt and ask for a power cycle
+  instead of reporting a wiring problem.
+
 ## [0.1.0] - 2026-10-05
 
 ### Added

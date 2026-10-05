@@ -94,6 +94,7 @@ __all__ = [
     "Send",
     "Slot",
     "Telemetry",
+    "answers_at",
     "calibration_schedule",
     "enter_service_mode",
     "motor_test_schedule",
@@ -423,6 +424,27 @@ def enter_service_mode(
 
 
 # ----------------------------------------------------------------------- probing
+
+
+def answers_at(transport: Transport, baudrate: int, *, timeout: float = 0.3) -> bool:
+    """True if the controller returns a valid speed reply at ``baudrate``.
+
+    Used to recognise a controller that is still on the 9600 baud service link
+    from an earlier run: it then ignores the normal 1200 baud link until it is
+    power-cycled. The transport is put back to its previous speed afterwards.
+    """
+    previous = transport.baudrate
+    transport.set_baudrate(baudrate)
+    try:
+        transport.drain()
+        transport.write(read_request(Command.SPEED))
+        parse_speed(transport.read(3, timeout))
+    except ProtocolError:
+        return False
+    else:
+        return True
+    finally:
+        transport.set_baudrate(previous)
 
 
 @dataclass

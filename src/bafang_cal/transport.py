@@ -25,6 +25,12 @@ class TransportError(OSError):
     """Raised when the underlying port cannot be opened or used."""
 
 
+#: How often to try reopening the port after a speed change, and the pause
+#: between attempts.
+_REOPEN_ATTEMPTS = 5
+_REOPEN_RETRY_DELAY = 0.05
+
+
 @runtime_checkable
 class Transport(Protocol):
     """Minimal byte-stream interface used by the service routines."""
@@ -101,7 +107,28 @@ class SerialTransport:
         return int(self._serial.baudrate)
 
     def set_baudrate(self, baudrate: int) -> None:
+        """Change the line speed by closing and reopening the port.
+
+        Changing the speed of an open port is accepted by every driver, but
+        some keep using the old speed (seen with a CH340 adapter on macOS:
+        everything sent "at 9600 baud" still went out at 1200). Reopening
+        applies the new speed reliably on all platforms.
+        """
+        import serial
+
+        self._serial.close()
         self._serial.baudrate = baudrate
+        for attempt in range(1, _REOPEN_ATTEMPTS + 1):
+            try:
+                self._serial.open()
+                break
+            except serial.SerialException as exc:
+                if attempt == _REOPEN_ATTEMPTS:
+                    raise TransportError(
+                        f"cannot reopen the serial port at {baudrate} baud: {exc}"
+                    ) from exc
+                time.sleep(_REOPEN_RETRY_DELAY)  # e.g. Windows still releasing the port
+        self._serial.reset_input_buffer()
 
     def write(self, data: bytes) -> None:
         import serial

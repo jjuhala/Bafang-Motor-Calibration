@@ -17,11 +17,15 @@ def instant_clock(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cli, "SystemClock", ManualClock)
 
 
-def use_simulator(monkeypatch: pytest.MonkeyPatch, **config: object) -> list[SimulatedController]:
+def use_simulator(
+    monkeypatch: pytest.MonkeyPatch, *, on_service_link: bool = False, **config: object
+) -> list[SimulatedController]:
     created: list[SimulatedController] = []
 
     def factory(clock: ManualClock) -> SimulatedController:
         controller = SimulatedController(clock, SimulatorConfig(**config))  # type: ignore[arg-type]
+        if on_service_link:  # left on the 9600 baud link by an earlier run
+            controller.write(bytes.fromhex("11 51 25 80 F6"))
         created.append(controller)
         return controller
 
@@ -386,3 +390,22 @@ def test_keyboard_interrupt_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cli, "_cmd_ports", boom)
     code, _ = run("ports")
     assert code == 130
+
+
+def test_probe_recognises_controller_left_on_service_link(monkeypatch: pytest.MonkeyPatch) -> None:
+    use_simulator(monkeypatch, on_service_link=True)
+    code, output = run("probe", "--simulate")
+    assert code == 1
+    assert "still there from an\nearlier calibration attempt" in output
+    assert "Switch the battery OFF" in output
+    assert "did not answer on the 1200 baud display link" not in output
+
+
+def test_calibrate_stops_when_controller_is_still_on_service_link(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sims = use_simulator(monkeypatch, on_service_link=True)
+    code, output = run("calibrate", "--simulate", "--yes")
+    assert code == 1
+    assert "still there from an\nearlier calibration attempt" in output
+    assert CALIBRATION_COMMAND.hex(" ") not in sent(sims[0])

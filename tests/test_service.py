@@ -22,6 +22,7 @@ from bafang_cal.service import (
     Send,
     Slot,
     Telemetry,
+    answers_at,
     calibration_schedule,
     enter_service_mode,
     motor_test_schedule,
@@ -424,3 +425,15 @@ def test_probe_switches_back_to_normal_baud(
     controller.set_baudrate(SERVICE_BAUDRATE)
     probe(controller, clock)
     assert controller.baudrate == NORMAL_BAUDRATE
+
+
+def test_answers_at_finds_a_controller_left_on_the_service_link(
+    clock: ManualClock, controller: SimulatedController
+) -> None:
+    assert answers_at(controller, NORMAL_BAUDRATE)
+    assert not answers_at(controller, SERVICE_BAUDRATE)
+
+    controller.write(SERVICE_MODE_REQUEST)  # an earlier run switched it to 9600
+    assert not answers_at(controller, NORMAL_BAUDRATE)
+    assert answers_at(controller, SERVICE_BAUDRATE)
+    assert controller.baudrate == NORMAL_BAUDRATE  # put back afterwards
