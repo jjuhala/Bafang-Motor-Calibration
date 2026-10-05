@@ -19,6 +19,8 @@ All notable changes to this project are documented here. The format follows
 - `probe` and the `calibrate` pre-check recognise a controller that is still on
   the 9600 baud service link from an earlier attempt and ask for a power cycle
   instead of reporting a wiring problem.
+- The README shows a real calibration run: an M620 after a rotor replacement,
+  with a square clip of the video and the tool's output.
 
 ## [0.1.0] - 2026-10-05
 

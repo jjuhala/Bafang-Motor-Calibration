@@ -105,6 +105,11 @@ byte as "Er XX"):
 Note that `41`–`44` mean battery faults on the riding screen; the meaning
 depends on the mode.
 
+On the first confirmed real run (an M620 with the UART link, after a rotor
+replacement) the controller reported `40` and `41` and then `44` about 16 s
+after the service link was opened. The other codes may pass too quickly to be
+seen with one status request per cycle, or may not occur on every controller.
+
 ### Motor-test cycle (500 ms, 512 ms with a speed reply)
 
 | t / ms | Request | Reply |

@@ -51,6 +51,7 @@ path = "src/bafang_cal/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include = ["src", "tests", "tools", "docs", "README.md", "CHANGELOG.md", "LICENSE"]
+exclude = ["docs/media"]  # README media only; keeps the source package small
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bafang_cal"]
