@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Firmware images are copyrighted by Bafang and must not be committed.
+# Keep your copy outside the repository or in firmware/ (ignored).
+firmware/*
+!firmware/README.md
+*.hex
+*.bin
+*c961*.txt
+
+# Byte traces written with --trace
+*.trace
+trace*.txt
